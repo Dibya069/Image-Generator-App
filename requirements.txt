@@ -1,0 +1,13 @@
+# for AI
+python-dotenv
+tqdm
+openai
+
+#for web
+Flask 
+flask-cors 
+requests
+
+#for database
+#conda-forge 
+pymongo
