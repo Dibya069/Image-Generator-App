@@ -21,14 +21,19 @@ def index():
 def generate_image():
     data = request.json
     prompt = data.get('prompt')
+    model = data.get("model")
+    style = data.get("style")
+    size = data.get("size")
+
+    f_prompt = f"{prompt}, the picture should be {style} type"
 
     if not prompt:
         return jsonify({'error': 'Prompt is required'}), 400
 
     response = client.images.generate(
-        model="dall-e-3",
-        prompt=prompt,
-        size="1024x1024",
+        model = model,
+        prompt = f_prompt,
+        size = size,
         quality="standard",
         n=1
     )
