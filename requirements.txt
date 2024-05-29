@@ -11,3 +11,6 @@ requests
 #for database
 #conda-forge 
 pymongo
+dnspython 
+email-validator
+Flask-PyMongo

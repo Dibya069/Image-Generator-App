@@ -5,6 +5,7 @@ from pymongo import MongoClient
 from flask_pymongo import PyMongo
 import os, re
 from openai import OpenAI
+from datetime import datetime
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -19,13 +20,6 @@ MONGO_URI = "mongodb+srv://dibya069:dibya069@cluster0.bn7rr30.mongodb.net/"
 mongo_client = MongoClient(MONGO_URI)
 db = mongo_client['user_database']
 users_collection = db['users']
-
-# app.config["SECRET_KEY"] = "8b39305291f5b23bb42e449658a0025f5b346a21"
-# app.config["MONGO_URI"] = "mongodb+srv://dibya069:dibya069@cluster0.bn7rr30.mongodb.net/"
-
-# mongo = PyMongo(app)
-# db = mongo.db
-# users_collection = db.create_collection(name = "MyImg")
 
 def is_valid_email(email):
     regex = r'^\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
@@ -45,32 +39,60 @@ def sign_in():
 
     existing_user = users_collection.find_one({'email': email})
     if not existing_user:
-        users_collection.insert_one({'email': email})
+        users_collection.insert_one({'email': email, 'history': []})
 
     return jsonify({'message': 'Sign in successful'}), 200
 
 @app.route('/generate-image', methods=['POST'])
 def generate_image():
     data = request.json
+    email = data.get('email')
     prompt = data.get('prompt')
     model = data.get("model")
     style = data.get("style")
     size = data.get("size")
+    sex = data.get("sex")
+    body = data.get("body")
 
-    f_prompt = f"{prompt}, the picture should be {style} type"
+    if not email or not is_valid_email(email):
+        return jsonify({'error': 'Invalid email'}), 400
 
     if not prompt:
         return jsonify({'error': 'Prompt is required'}), 400
 
+    f_prompt = (
+        f"{prompt} as a tattoo design that fits perfectly on a {sex}'s **{body}** part. "
+        "Ensure there is no extra background space beyond the shape of the body. "
+        "Use a white background for any empty space."
+        f"generate {style} style image"
+    )
+
     response = client.images.generate(
-        model = model,
-        prompt = f_prompt,
-        size = size,
+        model=model,
+        prompt=f_prompt,
+        size=size,
         quality="standard",
         n=1
     )
 
     image_url = response.data[0].url
+
+    # Save generation details to user's history
+    generation_details = {
+        'prompt': prompt,
+        'model': model,
+        'style': style,
+        'size': size,
+        'sex': sex,
+        'body': body,
+        'timestamp': datetime.utcnow()
+    }
+
+    users_collection.update_one(
+        {'email': email},
+        {'$push': {'history': generation_details}}
+    )
+
     return jsonify({'image_url': image_url})
 
 if __name__ == '__main__':
