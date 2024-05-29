@@ -1,7 +1,9 @@
 from flask import Flask, request, render_template, jsonify, send_file
 from flask_cors import CORS
 import requests
-import os
+from pymongo import MongoClient
+from flask_pymongo import PyMongo
+import os, re
 from openai import OpenAI
 
 from dotenv import load_dotenv
@@ -13,9 +15,39 @@ CORS(app)
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-@app.route('/')  # Add a route for the root path
+MONGO_URI = "mongodb+srv://dibya069:dibya069@cluster0.bn7rr30.mongodb.net/"
+mongo_client = MongoClient(MONGO_URI)
+db = mongo_client['user_database']
+users_collection = db['users']
+
+# app.config["SECRET_KEY"] = "8b39305291f5b23bb42e449658a0025f5b346a21"
+# app.config["MONGO_URI"] = "mongodb+srv://dibya069:dibya069@cluster0.bn7rr30.mongodb.net/"
+
+# mongo = PyMongo(app)
+# db = mongo.db
+# users_collection = db.create_collection(name = "MyImg")
+
+def is_valid_email(email):
+    regex = r'^\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    return re.match(regex, email)
+
+@app.route('/')
 def index():
     return 'Welcome to my Flask App!'
+
+@app.route('/sign-in', methods=['POST'])
+def sign_in():
+    data = request.json
+    email = data.get('email')
+
+    if not email or not is_valid_email(email):
+        return jsonify({'error': 'Invalid email'}), 400
+
+    existing_user = users_collection.find_one({'email': email})
+    if not existing_user:
+        users_collection.insert_one({'email': email})
+
+    return jsonify({'message': 'Sign in successful'}), 200
 
 @app.route('/generate-image', methods=['POST'])
 def generate_image():
