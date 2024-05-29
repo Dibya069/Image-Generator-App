@@ -1,9 +1,11 @@
 from flask import Flask, request, render_template, jsonify, send_file
 from flask_cors import CORS
 import requests
+from io import BytesIO
 from pymongo import MongoClient
 from flask_pymongo import PyMongo
 import os, re
+from PIL import Image
 from openai import OpenAI
 from datetime import datetime
 
@@ -85,6 +87,68 @@ def generate_image():
         'size': size,
         'sex': sex,
         'body': body,
+        'timestamp': datetime.utcnow()
+    }
+
+    users_collection.update_one(
+        {'email': email},
+        {'$push': {'history': generation_details}}
+    )
+
+    return jsonify({'image_url': image_url})
+
+@app.route('/generate-image-sec', methods=['POST'])
+def generate_image_sec():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    
+    file = request.files['file']
+    email = request.form.get('email')
+    prompt = request.form.get('prompt')
+    model = request.form.get('model')
+    style = request.form.get('style')
+
+    if not email or not is_valid_email(email):
+        return jsonify({'error': 'Invalid email'}), 400
+
+    if not prompt:
+        return jsonify({'error': 'Prompt is required'}), 400
+
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    # Open the uploaded image using Pillow
+    image = Image.open(file)
+    image = image.convert('RGBA')
+    width, height = 256, 256
+    image = image.resize((width, height))
+
+    # Convert the image to a BytesIO object
+    byte_stream = BytesIO()
+    image.save(byte_stream, format='PNG')
+    byte_array = byte_stream.getvalue()
+
+    f_prompt = (
+        f"Generate a {prompt} tattoo on the body part of the image is given. "
+        f"Generate {style} style image."
+    )
+
+    response = client.images.edit(
+        model=model,
+        image=byte_array,
+        prompt=f_prompt,
+        n=1,
+        size="1024x1024"  # Adjust the size as needed
+    )
+
+    image_url = response.data[0].url
+
+    # Save generation details to user's history
+    generation_details = {
+        'prompt': f_prompt,
+        'model': model,
+        'style': style,
+        'image': file.filename,
         'timestamp': datetime.utcnow()
     }
 
