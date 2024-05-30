@@ -92,6 +92,7 @@ def generate_image():
         'size': size,
         'sex': sex,
         'body': body,
+        'image': image_url,
         'timestamp': datetime.utcnow()
     }
 
@@ -175,7 +176,7 @@ def generate_image_sec():
             'prompt': f_prompt,
             'model': "dall-e-2",
             'style': style,
-            'image': file.filename,
+            'image': image_url,
             'timestamp': datetime.utcnow()
         }
 
@@ -188,6 +189,23 @@ def generate_image_sec():
     
     except openai.OpenAIError as e:
         return jsonify({'error': str(e)}), 500
+
+## ===============================================
+
+@app.route('/get-history', methods=['POST'])
+def get_history():
+    data = request.json
+    email = data.get('email')
+
+    if not email or not is_valid_email(email):
+        return jsonify({'error': 'Invalid email'}), 400
+
+    user = users_collection.find_one({'email': email})
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    history = user.get('history', [])
+    return jsonify({'history': history}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
