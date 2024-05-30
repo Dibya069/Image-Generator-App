@@ -28,9 +28,8 @@ This project utilizes OpenAI's DALL-E 3 and DALL-E 2 models for generating tatto
 ```
 ├── app.js             # React.js frontend application
 ├── backend
-│   ├── app.py       # Flask API for backend logic
-│   └── models.py    # MongoDB database models
-|   |__ masked.py    # Masking the given image
+│   ├── app.py       # Flask API for backend logic and MongoDB database models
+│   └── masked.py    # Masking the given image 
 └── img
     └── wizard-dark-dungeon-illustration.jpg   # Example image for the background (replace with your own)
 ```
