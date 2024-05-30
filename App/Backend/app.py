@@ -66,11 +66,13 @@ def generate_image():
         return jsonify({'error': 'Prompt is required'}), 400
 
     f_prompt = (
-        f"{prompt} as a tattoo design that fits perfectly on a {sex}'s **{body}** part. "
-        "Ensure there is no extra background space beyond the shape of the body. "
-        "Use a white background for any empty space."
-        f"generate {style} style image"
+        f"Create a highly detailed and visually striking {prompt} tattoo design specifically tailored for a {sex}'s {body}"
+        f"Ensure the tattoo design seamlessly integrates with the natural contours of the {body} part, maintaining anatomical accuracy. "
+        "Remove any extra background space beyond the body shape and use a clean white background for any negative space. "
+        f"Incorporate elements and stylistic features of {style} to enhance the aesthetic appeal of the tattoo. "
+        "The final design should be bold, clear, and ready for tattoo application."
     )
+
 
     response = client.images.generate(
         model=model,
@@ -150,8 +152,10 @@ def generate_image_sec():
         temp_mask_file.write(mask_byte_array)
 
     f_prompt = (
-        f"Generate a {prompt} tattoo on the body part of the image given. "
-        f"Generate {style} style image."
+        f"Generate a detailed and visually appealing {prompt} tattoo design on the given body part in the image. "
+        "The tattoo should perfectly fit and follow the contours of the body, maintaining anatomical accuracy. "
+        f"Ensure the design is in the {style} style. "
+        "The final design should be bold, clear, and ready for tattoo application."
     )
 
     try:
