@@ -194,7 +194,7 @@ def generate_image_sec():
 
 @app.route('/get-history', methods=['POST'])
 def get_history():
-    data = request.json
+    data = request.get_json()
     email = data.get('email')
 
     if not email or not is_valid_email(email):
